@@ -40,7 +40,7 @@ echo "Deactivating virtual environment..."
 deactivate
 
 echo "Making index.py executable..."
-chmod +x image_server.py
+chmod +x serial_bridge.py
 if [ $? -ne 0 ]; then
   echo "Error: Failed to make index.py executable. Aborting installation."
   exit 1
