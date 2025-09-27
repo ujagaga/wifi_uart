@@ -67,6 +67,7 @@ def serial_reader():
                 data = serial_conn.read(serial_conn.in_waiting or 1)
                 if data:
                     tcp_sock.sendall(data)
+                    dbg_print(f"[Serial→TCP] {data}")
             except Exception as e:
                 dbg_print(f"[Serial→TCP] {e}")
                 time.sleep(1)
@@ -97,6 +98,7 @@ def tcp_client():
             if not data:
                 raise ConnectionError("No data (likely disconnected)")
             if serial_conn and serial_conn.is_open:
+                dbg_print(f"[TCP→Serial] {data}")
                 serial_conn.write(data)
         except (ConnectionError, OSError) as e:
             dbg_print(f"[TCP] Lost: {e}")
