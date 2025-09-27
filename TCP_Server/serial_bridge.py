@@ -53,6 +53,7 @@ def serial_monitor():
                 current_dev = None
 
         if need_reconnect:
+            dbg_print(f"[Serial] Reconnecting")
             close_serial()
             open_serial(newest, esp_baud)
             last_esp_baud = esp_baud
@@ -122,6 +123,8 @@ def baud_poller():
                 if new_baud != esp_baud:
                     dbg_print(f"[HTTP] Baud change {esp_baud} → {new_baud}")
                     esp_baud = new_baud
+                    # close_serial()
+                    # open_serial(current_dev, esp_baud)
         except requests.RequestException:
             # Silent when ESP is unreachable
             pass
