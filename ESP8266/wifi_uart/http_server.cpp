@@ -6,16 +6,35 @@ ESP8266WebServer* webServer = nullptr;
 long currentBaud = 115200;
 
 String htmlPage() {
-  String page = "<!DOCTYPE html><html><head><title>UART Baud Rate</title></head><body>";
-  page += "<h2>ESP8266 UART Baud Rate</h2>";
-  page += "<p>Current baud rate: <b>" + String(currentBaud) + "</b></p>";
+  String page = F(
+    "<!DOCTYPE html><html><head>"
+    "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+    "<title>UART Baud Rate</title>"
+    "<style>"
+      "body{font-family:Arial,Helvetica,sans-serif;text-align:center;"
+      "background:#f4f4f4;margin:0;padding:20px;}"
+      "h2{font-size:2em;margin-bottom:20px;color:#333;}"
+      "p{font-size:1.5em;margin:20px 0;color:#555;}"
+      "form{margin-top:30px;}"
+      "input[type=text]{font-size:1.5em;padding:10px;width:80%;"
+      "max-width:300px;border:2px solid #333;border-radius:8px;}"
+      "input[type=submit]{font-size:1.5em;padding:12px 24px;"
+      "margin-top:20px;background:#4CAF50;color:#fff;border:none;"
+      "border-radius:8px;cursor:pointer;}"
+      "input[type=submit]:hover{background:#45a049;}"
+    "</style>"
+    "</head><body>"
+    "<h2>ESP8266 UART Baud Rate</h2>"
+  );
   page += "<form action=\"/set?t=" + String(millis()) + "\" method=\"GET\">";
-  page += "New baud rate: <input type=\"text\" name=\"baud\" value=\"" + String(currentBaud) + "\">";
+  page += "Baud rate:<br>";
+  page += "<input type=\"text\" name=\"baud\" value=\"" + String(currentBaud) + "\"><br>";
   page += "<input type=\"submit\" value=\"Set\">";
   page += "</form>";
   page += "</body></html>";
   return page;
 }
+
 
 static void handleRoot() {
   webServer->send(200, "text/html", htmlPage());
@@ -38,14 +57,34 @@ static void handleSetBaud() {
 
       Serial.flush();
       Serial.begin(currentBaud);
-      webServer->send(200, "text/html",
-        "<html><body><h3>Baud rate changed to " + String(currentBaud) + "</h3>"
-        "<a href=\"/\">Back</a></body></html>");
+
+      // Respond with HTML that auto-redirects with mobile-friendly style
+      String html = "<!DOCTYPE html><html><head>";
+      html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+      html += "<meta http-equiv='refresh' content='2;url=/' />";
+      html += "<title>Baud Rate Changed</title>";
+      html += "<style>"
+              "body{font-family:Arial,Helvetica,sans-serif;text-align:center;"
+              "background:#f4f4f4;margin:0;padding:40px;}"
+              "h3{font-size:2em;color:#333;}"
+              "p{font-size:1.5em;color:#555;}"
+              "a{font-size:1.2em;color:#2196F3;text-decoration:none;}"
+              "a:hover{text-decoration:underline;}"
+              "</style>";
+      html += "</head><body>";
+      html += "<h3>Baud rate changed to " + String(currentBaud) + "</h3>";
+      html += "<p>Redirecting back to main page...</p>";
+      html += "<a href='/'>Click here if not redirected</a>";
+      html += "</body></html>";
+
+      webServer->send(200, "text/html", html);
       return;
     }
   }
   webServer->send(400, "text/plain", "Invalid baud rate");
 }
+
+
 
 static void handleGetBaud() {
    webServer->send(200, "text/html", String(currentBaud));
