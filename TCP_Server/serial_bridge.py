@@ -48,18 +48,28 @@ def serial_monitor():
     while not stop_event.is_set():
         devices = scan_serial()
 
+        need_reconnect = False
+        target_dev = None
+
         if devices:
             newest = max(devices, key=os.path.getctime)
             if newest != current_dev:
-                dbg_print(f"[Serial] New device: {newest}, Reconnecting")
-                close_serial()
-                time.sleep(0.05)  # give OS time to release
-                if open_serial(newest, esp_baud):
-                    last_esp_baud = esp_baud
+                dbg_print(f"[Serial] New device: {newest}")
+                need_reconnect, target_dev = True, newest
+            elif esp_baud != last_esp_baud:
+                dbg_print(f"[Serial] Baud change {last_esp_baud} → {esp_baud}")
+                need_reconnect, target_dev = True, current_dev
         else:
             if current_dev:
                 dbg_print("[Serial] Device gone")
                 close_serial()
+
+        if need_reconnect and target_dev:
+            dbg_print("[Serial] Reconnecting")
+            close_serial()
+            time.sleep(0.05)  # give OS time to release
+            if open_serial(target_dev, esp_baud):
+                last_esp_baud = esp_baud
 
         time.sleep(config.SCAN_INTERVAL)
 
@@ -126,8 +136,7 @@ def tcp_client():
 
 # --- Baud Poller ------------------------------------------------------------
 def baud_poller():
-    global esp_baud, last_esp_baud
-
+    global esp_baud
     url = f"http://{config.TCP_SERVER_IP}/get"
     while not stop_event.is_set():
         try:
@@ -137,12 +146,6 @@ def baud_poller():
                 if new_baud != esp_baud:
                     dbg_print(f"[HTTP] Baud change {esp_baud} → {new_baud}")
                     esp_baud = new_baud   # monitor thread will reopen
-                    dbg_print("[Serial] Reconnecting")
-                    close_serial()
-                    time.sleep(0.05)  # give OS time to release
-                    if open_serial(current_dev, esp_baud):
-                        last_esp_baud = esp_baud
-
         except requests.RequestException:
             pass  # silent if ESP is unreachable
         except Exception as e:
