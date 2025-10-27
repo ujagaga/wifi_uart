@@ -21,7 +21,7 @@ void handleDataServer() {
     if (newClient) {
       if (tcpDataClient) tcpDataClient.stop();
       tcpDataClient = newClient;
-      Serial.println("Data client connected");
+      // Serial.println("Data client connected");
     }
   }
 }
@@ -32,7 +32,7 @@ void handleCfgServer() {
     if (newClient) {
       if (tcpCfgClient) tcpCfgClient.stop();
       tcpCfgClient = newClient;
-      Serial.println("Config client connected");
+      // Serial.println("Config client connected");
     }
   }
 

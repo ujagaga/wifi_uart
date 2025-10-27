@@ -6,16 +6,15 @@ WiFiClient cfgClient;
 
 bool connectToDataServer() {
   if (!dataClient.connected()) {
-    Serial.print("Connecting to data server ");
-    Serial.print(WiFi.gatewayIP()); // ESP32 AP’s IP is usually 192.168.4.1
-    Serial.print(":");
-    Serial.println(TCP_DATA_PORT);
+    // Serial.print("Connecting to data server ");
+    // Serial.print(WiFi.gatewayIP()); // ESP32 AP’s IP is usually 192.168.4.1
+    // Serial.print(":");
+    // Serial.println(TCP_DATA_PORT);
 
     if (dataClient.connect(WiFi.gatewayIP(), TCP_DATA_PORT)) {
       dataClient.setNoDelay(true);
-      Serial.println("Connected to data server!");
     } else {
-      Serial.println("Failed to connect to data server!");
+      // Serial.println("Failed to connect to data server!");
     }
   }
   return dataClient.connected();
@@ -23,16 +22,15 @@ bool connectToDataServer() {
 
 bool connectToCfgServer() {
   if (!cfgClient.connected()) {
-    Serial.print("Connecting to config server ");
-    Serial.print(WiFi.gatewayIP());
-    Serial.print(":");
-    Serial.println(TCP_CFG_PORT);
+    // Serial.print("Connecting to config server ");
+    // Serial.print(WiFi.gatewayIP());
+    // Serial.print(":");
+    // Serial.println(TCP_CFG_PORT);
 
     if (cfgClient.connect(WiFi.gatewayIP(), TCP_CFG_PORT)) {
       cfgClient.setNoDelay(true);
-      Serial.println("Connected to config server!");
     } else {
-      Serial.println("Failed to connect to config server!");
+      // Serial.println("Failed to connect to config server!");
     }
   }
   return cfgClient.connected();
@@ -60,11 +58,11 @@ void TCP_CLIENTS_process() {
     msg.trim();
     if (msg.startsWith("BAUD ")) {
       uint32_t newBaud = msg.substring(5).toInt();
-      Serial.printf("Changing baud to %u\n", newBaud);
-      Serial.flush();
+      // Serial.printf("Changing baud to %u\n", newBaud);
+      // Serial.flush();
       Serial.begin(newBaud);  // apply new baud rate
     } else {
-      Serial.printf("Unknown config message: %s\n", msg.c_str());
+      // Serial.printf("Unknown config message: %s\n", msg.c_str());
     }
   }
 }
