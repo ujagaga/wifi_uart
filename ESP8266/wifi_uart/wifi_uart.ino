@@ -7,11 +7,11 @@ void setup(void) {
   Serial.begin(115200);      
   delay(500);
   WIFIC_init();
-  HTTP_SERVER_init();
-  TCP_SERVER_init(); 
+  TCP_CLIENTS_init();
+
 }
 
 void loop(void) {
-  HTTP_SERVER_process();
-  TCP_SERVER_process();
+  TCP_CLIENTS_process();
+  UART_RX_process();
 }
