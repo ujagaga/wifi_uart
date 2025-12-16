@@ -1,5 +1,5 @@
 #include <WiFi.h>
-#include "USB.h"
+#include <USB.h>
 #include "tcp_servers.h"  
 
 #if !ARDUINO_USB_CDC_ON_BOOT
@@ -13,22 +13,14 @@ static void usbEventCallback(void *arg, esp_event_base_t event_base, int32_t eve
     arduino_usb_cdc_event_data_t *data = (arduino_usb_cdc_event_data_t *)event_data;
     switch (event_id) {
       case ARDUINO_USB_CDC_CONNECTED_EVENT:
-        // Serial.println("CDC CONNECTED");
         break;
 
       case ARDUINO_USB_CDC_DISCONNECTED_EVENT:
-        // Serial.println("CDC DISCONNECTED");
         break;
 
       case ARDUINO_USB_CDC_LINE_CODING_EVENT:
       {
-        // Serial.printf("CDC LINE CODING: bit_rate=%lu data_bits=%u stop_bits=%u parity=%u\n",
-        //   data->line_coding.bit_rate,
-        //   data->line_coding.data_bits,
-        //   data->line_coding.stop_bits,
-        //   data->line_coding.parity
-        // );
-        TCP_CFG_sendBaudRate(data->line_coding.bit_rate);
+        TCP_CFG_setConfig(data);        
       }
         break;
 

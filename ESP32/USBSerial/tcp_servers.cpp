@@ -1,3 +1,5 @@
+#include <USB.h>
+#include <ArduinoJson.h>
 #include "tcp_servers.h"
 #include "config.h"
 
@@ -6,6 +8,9 @@ WiFiServer tcpCfgServer(TCP_CFG_PORT);
 
 WiFiClient tcpDataClient;
 WiFiClient tcpCfgClient;
+
+static arduino_usb_cdc_event_data_t g_cfg;
+static bool g_cfg_valid = false;
 
 void TCP_SERVERS_init() {
   tcpDataServer.begin();
@@ -21,32 +26,8 @@ void handleDataServer() {
     if (newClient) {
       if (tcpDataClient) tcpDataClient.stop();
       tcpDataClient = newClient;
-      // Serial.println("Data client connected");
     }
   }
-}
-
-void handleCfgServer() {
-  if (!tcpCfgClient || !tcpCfgClient.connected()) {
-    WiFiClient newClient = tcpCfgServer.available();
-    if (newClient) {
-      if (tcpCfgClient) tcpCfgClient.stop();
-      tcpCfgClient = newClient;
-      // Serial.println("Config client connected");
-    }
-  }
-
-  // Just discard any incoming data to avoid TCP buffer buildup
-  if (tcpCfgClient && tcpCfgClient.connected()) {
-    while (tcpCfgClient.available()) {
-      tcpCfgClient.read();  // read and ignore
-    }
-  }
-}
-
-void TCP_SERVERS_process() {
-  handleDataServer();
-  handleCfgServer();
 }
 
 void TCP_DATA_send(const uint8_t *buf, size_t len) {
@@ -54,8 +35,50 @@ void TCP_DATA_send(const uint8_t *buf, size_t len) {
     tcpDataClient.write(buf, len);
 }
 
-void TCP_CFG_sendBaudRate(uint32_t baud) {
-  if (tcpCfgClient && tcpCfgClient.connected()) {
-    tcpCfgClient.printf("BAUD %u\n", baud);
+void TCP_CFG_sendConfig()
+{
+  if (!tcpCfgClient || !tcpCfgClient.connected() || !g_cfg_valid)
+    return;
+
+  StaticJsonDocument<256> doc;
+
+  doc["bit_rate"]  = g_cfg.line_coding.bit_rate;
+  doc["data_bits"] = g_cfg.line_coding.data_bits;
+  doc["stop_bits"] = g_cfg.line_coding.stop_bits;
+  doc["parity"]    = g_cfg.line_coding.parity;
+  doc["dtr"]       = g_cfg.line_state.dtr;
+  doc["rts"]       = g_cfg.line_state.rts;
+
+  serializeJson(doc, tcpCfgClient);
+  tcpCfgClient.println();   // newline-delimited JSON
+}
+
+void TCP_CFG_setConfig(const arduino_usb_cdc_event_data_t *data)
+{
+  g_cfg = *data;
+  g_cfg_valid = true; 
+
+  TCP_CFG_sendConfig();  // push update
+}
+
+void handleCfgServer()
+{
+  if (!tcpCfgClient || !tcpCfgClient.connected()) {
+    WiFiClient newClient = tcpCfgServer.available();
+    if (newClient) {
+      if (tcpCfgClient) tcpCfgClient.stop();
+      tcpCfgClient = newClient;
+
+      TCP_CFG_sendConfig();
+    }
   }
+
+  while (tcpCfgClient && tcpCfgClient.available()) {
+    tcpCfgClient.read();
+  }
+}
+
+void TCP_SERVERS_process() {
+  handleDataServer();
+  handleCfgServer();
 }
