@@ -107,9 +107,14 @@ def uart_manager_thread():
     global uart_port, uart_ser
 
     while not stop_event.is_set():
-        if uart_ser and uart_ser.is_open:
-            time.sleep(0.5)
-            continue
+        if uart_ser:
+            if not os.path.exists(uart_ser.port):
+                print("[UART] Device disappeared")
+                try:
+                    uart_ser.close()
+                except:
+                    pass
+                uart_ser = None
 
         if not uart_cfg:
             time.sleep(0.5)
