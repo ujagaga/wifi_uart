@@ -30,3 +30,4 @@ I tried connecting an RS485 module so I can communicate with DLMS devices like a
 ## Status
 All done, tested and working fine
 
+As a bonus, there is also `uart_tcp_bridge_server.py` which monitors uart and connects to it using hardcoded parameters. It opens a TCP server at port 4059 and exchanges data between a connected client and uart. It accepts only one client.
