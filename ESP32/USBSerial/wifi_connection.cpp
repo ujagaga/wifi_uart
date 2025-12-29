@@ -8,12 +8,4 @@ void WIFIC_init(void){
   WiFi.softAPConfig(local_IP, gateway, subnet);
   
   bool success = WiFi.softAP(SSID, PASSWORD);
-
-  // if (!success) {
-  //   Serial.println("AP OK");
-  //   Serial.print("IP: ");
-  //   Serial.println(WiFi.softAPIP());
-  // } else {
-  //   Serial.println("AP Fail!");
-  // }
 }

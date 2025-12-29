@@ -8,9 +8,8 @@ WiFiServer tcpCfgServer(TCP_CFG_PORT);
 
 WiFiClient tcpDataClient;
 WiFiClient tcpCfgClient;
-
-static arduino_usb_cdc_event_data_t g_cfg;
-static bool g_cfg_valid = false;
+arduino_usb_cdc_event_data_t g_cfg;
+bool g_cfg_valid;
 
 void TCP_SERVERS_init() {
   tcpDataServer.begin();
@@ -79,6 +78,11 @@ void handleCfgServer()
 }
 
 void TCP_SERVERS_process() {
+  static uint32_t lastCfgPush = 0;
+  if (g_cfg_valid && millis() - lastCfgPush > 200) {
+    TCP_CFG_sendConfig();
+    lastCfgPush = millis();
+  }
   handleDataServer();
   handleCfgServer();
 }
