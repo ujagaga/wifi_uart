@@ -26,4 +26,7 @@ This way the two devices (Python or ESP8266, as client and ESP32 as server) are 
 - Connect from DlmsDirector to ESP32 device as if it was wired to the smart meter.
 
 ## Status
-Very close, need to test
+ESP32 => Python client works. 
+ESP32 => ESP8266 does not work.
+
+Tries to replace ESP32 with ESP8266, but failed, so giving up. Will create a linux box to use my python script and a proven USB RS485 adapter.
