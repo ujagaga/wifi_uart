@@ -3,6 +3,7 @@
 """
 DLMS-safe TCP ↔ UART bridge for ESP32-S2 USB CDC tunnel
 Python 3.5 compatible
+pip3 install pyserial
 """
 import socket
 import json
