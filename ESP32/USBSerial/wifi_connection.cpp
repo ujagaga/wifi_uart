@@ -1,11 +1,31 @@
 #include <WiFi.h>
 #include "config.h"
+#include "usbcdc.h"
 
 void WIFIC_init(void){
-  IPAddress local_IP(192,168,4,1);
-  IPAddress gateway(192,168,4,1);
-  IPAddress subnet(255,255,255,0);
-  WiFi.softAPConfig(local_IP, gateway, subnet);
-  
-  bool success = WiFi.softAP(SSID, PASSWORD);
+  WiFi.mode(WIFI_STA); // Connect as station
+  WiFi.begin(SSID, PASSWORD);
+
+#ifdef DEBUG_MSG
+  USBSerial.print("Connecting to WiFi");
+#endif
+  int retry = 0;
+  while (WiFi.status() != WL_CONNECTED && retry < 20) {
+    delay(500);
+#ifdef DEBUG_MSG
+      USBSerial.print(".");
+#endif
+    retry++;
+  }
+
+#ifdef DEBUG_MSG
+  if(WiFi.status() == WL_CONNECTED){
+    USBSerial.println("\nWiFi connected!");
+    USBSerial.print("IP: ");
+    USBSerial.println(WiFi.localIP());
+  } else {
+    USBSerial.println("\nFailed to connect to WiFi");
+  }
+#endif
 }
+

@@ -1,4 +1,4 @@
-#include "tcp_servers.h"
+#include "tcp_clients.h"
 
 #if !ARDUINO_USB_CDC_ON_BOOT
 USBCDC USBSerial;
@@ -12,35 +12,32 @@ static void usbEventCallback(void *arg,
                              int32_t event_id,
                              void *event_data)
 {
-  if (event_base != ARDUINO_USB_CDC_EVENTS)
-    return;
+    if (event_base != ARDUINO_USB_CDC_EVENTS)
+        return;
 
-  arduino_usb_cdc_event_data_t *data =
-      (arduino_usb_cdc_event_data_t *)event_data;
+    arduino_usb_cdc_event_data_t *data =
+        (arduino_usb_cdc_event_data_t *)event_data;
 
-  switch (event_id) {
+    switch (event_id) {
+        case ARDUINO_USB_CDC_CONNECTED_EVENT:
+        case ARDUINO_USB_CDC_DISCONNECTED_EVENT:
+            break;
 
-    case ARDUINO_USB_CDC_CONNECTED_EVENT:
-      // No action required
-      break;
+        case ARDUINO_USB_CDC_LINE_CODING_EVENT:
+            TCPC_CFG_setConfig(data);  // Send JSON config to server
+            break;
 
-    case ARDUINO_USB_CDC_DISCONNECTED_EVENT:
-      // No action required
-      break;
+        case ARDUINO_USB_CDC_RX_EVENT:        
+            break;
 
-    case ARDUINO_USB_CDC_LINE_CODING_EVENT:
-      // Capture settings only; do NOT act on them here
-      g_cfg = *data;
-      g_cfg_valid = true;
-      break;
+        default:
+            break;
+    }
+}
 
-    case ARDUINO_USB_CDC_RX_EVENT:
-      // Do nothing here; data is pulled in main loop
-      break;
-
-    default:
-      break;
-  }
+void USB_CDC_send(uint8_t* buf, size_t len){
+    USBSerial.write(buf, len);
+    USBSerial.flush();
 }
 
 /* ---------------------------------------------------------
@@ -48,43 +45,19 @@ static void usbEventCallback(void *arg,
    --------------------------------------------------------- */
 void USB_CDC_init(void)
 {
-  USB.onEvent(usbEventCallback);
-  USBSerial.onEvent(usbEventCallback);
+    USB.onEvent(usbEventCallback);
+    USBSerial.onEvent(usbEventCallback);
 
-  USBSerial.begin();   // CDC ACM
-  USB.begin();         // USB stack
+    USBSerial.begin();   // CDC ACM
+    USB.begin();         // USB stack
 }
 
-/* ---------------------------------------------------------
-   Main CDC ↔ TCP data bridge
-   --------------------------------------------------------- */
 void USB_CDC_process(void)
-{
-  if (!tcpDataClient || !tcpDataClient.connected())
-    return;
-
-  /* ---------- USB → TCP ---------- */
-  while (USBSerial.available()) {
-    uint8_t buf[64];
-    size_t n = USBSerial.read(buf, sizeof(buf));
-    if (n > 0) {
-      tcpDataClient.write(buf, n);
-    }
-  }
-
-  /* ---------- TCP → USB ---------- */
-  bool wrote = false;
-
-  while (tcpDataClient.available()) {
-    uint8_t buf[64];
-    size_t n = tcpDataClient.read(buf, sizeof(buf));
-    if (n > 0) {
-      USBSerial.write(buf, n);
-      wrote = true;
-    }
-  }
-
-  if (wrote) {
-    USBSerial.flush();   // ensure immediate USB transmission
-  }
+{    
+    // USB → TCP
+    while (USBSerial.available()) {
+        uint8_t buf[1024];
+            size_t n = USBSerial.read(buf, sizeof(buf));
+            TCPC_DATA_send(buf, n);
+    }    
 }
